@@ -1,1 +1,9 @@
 Install Watsonx Orchestrate 5.1 on Premises
+Today, watsonx orchestrate is deployed using these deployment patterns:
+
+Managed SaaS
+IBM Cloud : IBM managed instances provisioned as service on IBM Cloud
+AWS: IBM managed instances provisioned as a service on Amazon Web Services ( AWS)
+
+On-premises deployment
+Client managed instances that are provisioned on IBM Cloud Pak for data and IBM Software Hub
