@@ -7,3 +7,9 @@ Watsonx Orchestrate is an AI-powered assistant that streamlines repetitive tasks
 Watsonx Orchestrate can be deployed using:
 - **Managed SaaS**: IBM Cloud or AWS
 - **On-Premises**: IBM Cloud Pak for Data & IBM Software Hub
+## Prerequisites
+Before starting the deployment, ensure the following:
+- **Infrastructure**: OpenShift 4.16 Cluster with 5 worker nodes (32 vCPUs, 128GB RAM)
+- **Storage**: ODF (local disks) - 2TB
+- **Access to IBM TechZone**: [TechZone Reservation](https://techzone.ibm.com/my/reservations/create)
+- **Entitlement API Key**: Obtain from IBM Container Software Library
