@@ -156,7 +156,8 @@ We will create the namespaces for the IBM licensing service, and the IBM Schedul
 
 ## Confirm persistent storage
 Run the following
-* `oc get sc'
+* `oc get sc`
+  
 * ![image](https://github.com/user-attachments/assets/2af959f6-5899-4b4c-8258-96364578ef46)
 
 * `oc get pvc -A`
@@ -199,6 +200,8 @@ Wait until the installation completes.
 
 ### Install Redhat Openshift AI
 1. From the bastion ssh session, create the namespace for the operator `oc new-project redhat-ods-operator`.
+   ![image](https://github.com/user-attachments/assets/9b8d7188-75d8-4c3b-9539-87b2601dca57)
+
 2. Create the operator group
 ``` sh
 cat <<EOF |oc apply -f -
@@ -209,6 +212,8 @@ name: rhods-operator
 namespace: redhat-ods-operator
 EOF
 ```
+![image](https://github.com/user-attachments/assets/55bf9c58-4293-459b-93c7-1ca9608eab37)
+
 3. Create the subscription
 ``` sh
 cat <<EOF |oc apply -f -
@@ -227,16 +232,101 @@ config:
         - name: "DISABLE_DSC_CONFIG"
 EOF
 ```
+![image](https://github.com/user-attachments/assets/524e16aa-2e8d-43a5-a4ca-3d52e72f512a)
+
+4.You will now need to create a Red Hat OpenShift Dev Space CLI (DSC) object called default-dsci in
+the redhat-ods-monitoring project. This is a feature of Red Hat OCP that allows users to work with
+certificates.
+``` sh
+cat <<EOF |oc apply -f -
+apiVersion: dscinitialization.opendatahub.io/v1
+kind: DSCInitialization
+metadata:
+  name: default-dsci
+spec:
+  applicationsNamespace: redhat-ods-applications
+  monitoring:
+    managementState: Managed
+    namespace: redhat-ods-monitoring
+  serviceMesh:
+    managementState: Removed
+  trustedCABundle:
+    managementState: Managed
+    customCABundle: ""
+EOF
 
 
+```
 
+![image](https://github.com/user-attachments/assets/15f2c5de-796a-4913-810d-30d01532d1d4)
 
+Confirm the operator is running
+5. run ` oc get pods -n redhat-ods-operator`
+![image](https://github.com/user-attachments/assets/edcb03ac-3b52-49f2-9958-58cb4b86173f)
+6. run `oc get dscinitialization`
+![image](https://github.com/user-attachments/assets/cecd245c-08af-40a0-92dc-9d1fd0c1eaf3)
 
+7. Create a data science cluster
 
+``` sh
+cat <<EOF |oc apply -f -
+apiVersion: datasciencecluster.opendatahub.io/v1
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    codeflare:
+      managementState: Removed
+    dashboard:
+      managementState: Removed
+    datasciencepipelines:
+      managementState: Removed
+    kserve:
+      managementState: Managed
+      defaultDeploymentMode: RawDeployment
+      serving:
+        managementState: Removed
+        name: knative-serving
+    kueue:
+      managementState: Removed
+    modelmeshserving:
+      managementState: Removed
+    ray:
+      managementState: Removed
+    trainingoperator:
+      managementState: Managed
+    trustyai:
+      managementState: Removed
+    workbenches:
+      managementState: Removed
+EOF
 
+```
+![image](https://github.com/user-attachments/assets/91573e60-7405-4bbe-b655-201c3d3db721)
+8. wait for the data science cluster to be ready
+9. run to check its status `oc get datasciencecluster default-dsc -o jsonpath='"{.status.phase}" {"\n"}'`
 
+![image](https://github.com/user-attachments/assets/9bc9f678-12d9-4b6c-bb0a-1dadedb23452)
+10. Run  `oc get pods -n redhat-ods-applications`
+![image](https://github.com/user-attachments/assets/36a5e58b-91ee-41d2-83a8-eaa7d4695edf)
 
+11.The last setup step for setting up Red Hat OpenShift AI involves editing the
+inferenceservice-config file in the redhat-ods-applications project. You need to do this on the
+OpenShift Console
+*Login to openshift console. 
+*Click to expand workload>Configmaps
+*Select Redhat-ods-applications project
+*Select inferenceservice-config
+*Click on YAML tab.
 
+![image](https://github.com/user-attachments/assets/87a35275-8995-4986-8a9e-dcbdc1079dfe)
+
+![image](https://github.com/user-attachments/assets/276e144e-eb90-4ad4-bc23-209e8a8d12aa)
+
+![image](https://github.com/user-attachments/assets/e20d98dc-91a3-45c6-84e9-b866a34a6912)
+
+![image](https://github.com/user-attachments/assets/238c54b6-0c16-4eaf-8932-5d91c82de35f)
 
 
 
