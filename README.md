@@ -463,7 +463,7 @@ cpd-cli manage setup-mcg \
 
 
 ![image](https://github.com/user-attachments/assets/d7c731d5-5569-4a7e-b2de-04b1cad72547)
-* Confirm that the secrets are ctreated by running
+* Confirm that the secrets are created by running
 ``` sh
 oc get secrets --namespace=${PROJECT_CPD_INST_OPERANDS} \
 noobaa-account-watsonx-orchestrate \
@@ -471,7 +471,7 @@ noobaa-cert-watsonx-orchestrate \
 noobaa-uri-watsonx-orchestrate
 ```
 ![image](https://github.com/user-attachments/assets/e21547bb-dd64-42d7-a836-1d71bd75614e)
-## Applied the required permissions
+## Apply the required permissions
 1. Run `${CPDM_OC_LOGIN}`
 2. We used instances without tethered projects
 
@@ -483,8 +483,44 @@ cpd-cli manage authorize-instance-topology \
 ![image](https://github.com/user-attachments/assets/3be69fd4-e252-4cb8-bb2b-349b569ac436)
 
 
-## Applied the required permissions
+## Install IBM Software Hub
+1. run `${CPDM_OC_LOGIN}`
+2. For Red Hat OpenShift Data Foundation Storage run ( Note: set the storage test to false since this is non-prod)
 
+``` sh
+cpd-cli manage setup-instance \
+--release=${VERSION} \
+--license_acceptance=true \
+--cpd_operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--block_storage_class=${STG_CLASS_BLOCK} \
+--file_storage_class=${STG_CLASS_FILE} \
+--run_storage_tests=false
+
+```
+
+3. The above command takes around 45 min and completes around try 63
+4.![image](https://github.com/user-attachments/assets/f2592bcd-e603-4ba8-b1c6-7e74565204ef)
+5.![image](https://github.com/user-attachments/assets/3cbf09cc-0b64-4c37-ba06-0117cae4bf8c)
+6. Let's check the install is successful.
+7. Run `cpd-cli manage get-cr-status \ --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}`
+![image](https://github.com/user-attachments/assets/1b945b60-99eb-41a1-a78d-5ba41d3ac1f8)
+
+8. Now you get the CPD credential to login to CPD console.
+9. Run `cpd-cli manage get-cpd-instance-details \ --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \ --get_admin_initial_credentials=true`
+
+![image](https://github.com/user-attachments/assets/be081637-ac5c-48cc-9ca9-2b92e2420085)
+
+Use the Credential details of your own setup to login
+![image](https://github.com/user-attachments/assets/848a4cdc-c8dd-429a-839c-cba82b649b90)
+![image](https://github.com/user-attachments/assets/49078b3b-609d-4ee6-993f-14f3086698d3)
+
+## Install cpfs and cpd_platform
+Now we are ready to install the platform and services. You will run a batch installation to install
+multiple (though not all) components simultaneously. Batch installations support parallel installation of
+some components
+
+![image](https://github.com/user-attachments/assets/1c7d1ba6-208d-4613-8a56-dd6cf784b226)
 
 
 
