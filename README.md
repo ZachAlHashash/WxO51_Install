@@ -515,12 +515,185 @@ Use the Credential details of your own setup to login
 ![image](https://github.com/user-attachments/assets/848a4cdc-c8dd-429a-839c-cba82b649b90)
 ![image](https://github.com/user-attachments/assets/49078b3b-609d-4ee6-993f-14f3086698d3)
 
+
+## Apply Entitlements
+Even though you are working in a non-production environment, you must provide information about the
+licenses that you are using. If you skip this step, you will be unable to install any solutions or services.
+We are installing CP4D Enterprise and watsonx orchestrate non production.
+1. Run this for CP4D
+``` sh
+cpd-cli manage apply-entitlement \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--entitlement=cpd-enterprise \
+--production=false
+```
+2. Run this for watsonx orchestrate
+```sh
+cpd-cli manage apply-entitlement \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--entitlement=watsonx-orchestrate \
+--production=false
+
+```
+
+
 ## Install cpfs and cpd_platform
 Now we are ready to install the platform and services. You will run a batch installation to install
 multiple (though not all) components simultaneously. Batch installations support parallel installation of
 some components
 
 ![image](https://github.com/user-attachments/assets/1c7d1ba6-208d-4613-8a56-dd6cf784b226)
+
+1. Run `${CPDM_OC_LOGIN}`
+2. Then run
+``` sh
+cpd-cli manage apply-olm \
+--release=${VERSION} \
+--cpd_operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--components=${COMPONENTS}
+```
+
+![image](https://github.com/user-attachments/assets/d2688fce-fe0a-42fc-85c5-650c5adc0fec)
+
+3. Now run this command
+``` sh
+cpd-cli manage apply-cr \
+--release=${VERSION} \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--components=${COMPONENTS} \
+--block_storage_class=${STG_CLASS_BLOCK} \
+--file_storage_class=${STG_CLASS_FILE} \
+--license_acceptance=true \
+--param-file=/tmp/work/install-options.yml
+```
+![image](https://github.com/user-attachments/assets/975f131f-9c3d-494b-b92e-9df566a08702)
+![image](https://github.com/user-attachments/assets/5c79683e-7aa4-4853-8ff1-9d14d6ef59e4)
+
+
+4. Confirm the status , run
+
+``` sh
+cpd-cli manage get-cr-status \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+```
+![image](https://github.com/user-attachments/assets/9c537e56-f484-46dc-b4da-952e78e5eadc)
+
+
+5. Run this to check the list of subscriptions
+``` sh
+oc get subscriptions.operators.coreos.com --all-namespaces | grep cpd-operators
+
+```
+![image](https://github.com/user-attachments/assets/38c3317b-1acc-4251-9f59-0da1cf2a38f9)
+
+## Install watsonx orchestrate
+### install wxo pre-requisites
+1. run `${CPDM_OC_LOGIN}`
+2. Create an instance of app connect
+
+``` sh
+cpd-cli manage setup-appconnect \
+--appconnect_ns=${PROJECT_IBM_APP_CONNECT} \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--release=${VERSION} \
+--components=watsonx_orchestrate \
+--file_storage_class=${STG_CLASS_FILE}
+```
+
+![image](https://github.com/user-attachments/assets/b03f04f6-c239-4eed-8a6f-c9921a8848d0)
+
+3. create the required OLM objects for watsonx Orchestrate in the operators project for the instance
+``` sh
+cpd-cli manage apply-olm \
+--release=${VERSION} \
+--cpd_operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--components=watsonx_orchestrate
+```
+![image](https://github.com/user-attachments/assets/c268c65a-65c0-449a-8892-8a46e6de748c)
+4. Create the custom resource for watsonx Orchestrate ( using OpenShift Data Foundation option)
+``` sh
+cpd-cli manage apply-cr \
+--components=watsonx_orchestrate \
+--release=${VERSION} \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--block_storage_class=${STG_CLASS_BLOCK} \
+--file_storage_class=${STG_CLASS_FILE} \
+--license_acceptance=true
+```
+
+![image](https://github.com/user-attachments/assets/7d0c9452-e4fa-49ed-9a80-42f40214f7c6)
+
+![image](https://github.com/user-attachments/assets/03f9cab4-886c-4088-9a79-e2444d98eb8c)
+
+5. Confirm the status of the custom resource by running
+``` sh
+cpd-cli manage get-cr-status \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--components=watsonx_orchestrate
+```
+![image](https://github.com/user-attachments/assets/c98cdcd0-b11f-4bc9-b57c-601f8750e0dc)
+
+6. Login to CPD console using the credentials obtained in the previous steps.
+   ![image](https://github.com/user-attachments/assets/8633ac95-eff3-4333-9748-b023758625d6)
+You should see the services in green
+7. Run `oc get wo`
+![image](https://github.com/user-attachments/assets/381fe32a-04f9-4007-9373-bc3036cc4a1c)
+There should be 57 components deployed in total ( for WxO 5.1)
+
+## Creating a service instance for watsonx Orchestrate
+There two main methods to create the Wxo Instance:
+
+1. Creating a service instance for watsonx Orchestrate from the web client. In 5.1 release, there is an issue when creating the instance using the Web Client. 
+
+2. Creating a service instance for watsonx Orchestrate with the cpd-cli service-instance create command. I used this method 
+
+### Creating a service instance for watsonx Orchestrate with the cpd-cli
+1. Generate the API key that you need for user authentication by going to your Profile and settings page in the web client and clicking Generate API key. Copy the API Key
+2. Run these commands in the terminal 
+* `export API_KEY=<api-key>`
+* `export CPD_USERNAME=<user-name>`  use cpadmin for the user name.
+* `export LOCAL_USER=<local-user>`   use any local name. I used wxolocal
+* `export CPD_PROFILE_NAME=<cpd-profile-name>`  any arbitrary name I used wxcpro
+* `oc get route cpd \ --namespace=${PROJECT_CPD_INST_OPERANDS}` 
+* `export CPD_PROFILE_URL=<cpd-url>` ensure to add `https://` to the URL
+
+3. Run
+```sh
+cpd-cli config users set ${LOCAL_USER} \ --username ${CPD_USERNAME} \ --apikey ${API_KEY}
+```
+4. Run
+``` sh
+cpd-cli config profiles set ${CPD_PROFILE_NAME} \ --user ${LOCAL_USER} \ --url ${CPD_PROFILE_URL}
+```
+### Creating WxO service instance
+1. run `export INSTANCE_NAME=<display-name>`     I used wxozak
+2. run `export INSTANCE_DESCRIPTION="<description>“` add a description in""
+3. Create the orchestrate-instance.json file using this command
+``` sh
+cat << EOF > ./orchestrate-instance.json { "addon_type": "orchestrate", "display_name": "${INSTANCE_NAME}", "namespace": "${PROJECT_CPD_INST_OPERANDS}", "addon_version": "${VERSION}", "create_arguments": { "description": "${INSTANCE_DESCRIPTION}" } 
+} EOF
+```
+4. Set the PAYLOAD_FILE environment variable to the fully qualified name of the JSON payload file on your workstation
+``` sh
+export PAYLOAD_FILE=<fully-qualified-JSON-file-name>
+```
+I used  /home/itzuser/cpd/orchestrate-instance.json
+5. Create the instance by running 
+``` sh
+cpd-cli service-instance create \ --profile=${CPD_PROFILE_NAME} \ --from-source=${PAYLOAD_FILE}
+
+```
+6. Login to CPD console , click on the dots in the right up corner
+7. Select IBM Cloud Pak for Data
+8. On the left pane select instances. You should watsonx orchestrate instance you just created
+   ![image](https://github.com/user-attachments/assets/5a47e9c3-bdea-4cf5-8b3a-3943bb13976d)
+
+
+9. Congratulations
+
+    ![image](https://github.com/user-attachments/assets/a02d9373-4d83-4e6a-8155-53194e4cde1b)
+
+
 
 
 
