@@ -328,9 +328,155 @@ OpenShift Console
 
 ![image](https://github.com/user-attachments/assets/238c54b6-0c16-4eaf-8932-5d91c82de35f)
 
+## Installing Red Hat OpenShift Serverless Knative Eventing
+This is a key components and the following steps should be carefully applied. There is an issue with knative eventing installation in 5.1. latest version of redhat's openshift serverless operator changed the kafka-broker-dispatcher from a deployment object to a statefulset object.  The installation is waiting for a deployment to come up and bring up the pods, but the pods are now brought up by a statefulset , so this line will never complete.
+
+## To Fix this
+1. Run `podman ps`.
+2. ![image](https://github.com/user-attachments/assets/8672088c-9064-4cb1-b3c5-5632ee605f04)
+3. Record the COntainer ID.
+4. Next run the following command replacing olm-utils container with podman container ID.
+5. Example : `podman exec -it (olm-utils container) /bin/bash` - remove the parentheses.
+6. ![image](https://github.com/user-attachments/assets/d130aa64-6e66-4df7-b974-d02211e44c99)
+
+7. cd to bin
+8. locate the deploy-knative-eventing, use vi to edit the file.
+9. Delete this line `oc wait deployment -n knative-eventing kafka-broker-dispatcher --for condition=Available=True --timeout=60s`
+10. save the file `:wq`
+11. Now you can run `cpd-cli manage deploy-knative-eventing \ --release=${VERSION} \ --block_storage_class=${STG_CLASS_BLOCK}`
+
+![image](https://github.com/user-attachments/assets/deb37d75-d115-4a22-88b8-0c260da7235b)
 
 
+## Install App Connect 
+1. Now we need to install app connect which is required by watsonx orchestrate
+2. Run the following command while logged in to bastion workstation using ssh. You should be in cpd folder as root to get the app connect package. ( if you were logged off, re-run the source ./cpd_vars.sh, ${OC_LOGIN} and ${CPDM_OC_LOGIN}
+3. Run `curl -sSLO https://github.com/IBM/cloud-pak/raw/master/repo/case/ibm-appconnect/${AC_CASE_VERSION}/ibm-appconnect-${AC_CASE_VERSION}.tgz`
+4. untar the file using this command `tar -xf  ibm-appconnect-12.5.0.tgz`
+5. ![image](https://github.com/user-attachments/assets/b1d53165-01f8-4f4b-977d-7ff89b1477df)
+6.Create the app-connect project , run `oc new-project ${PROJECT_IBM_APP_CONNECT}`
+7.![image](https://github.com/user-attachments/assets/0f7adf6a-8d3d-4dbc-b42c-5396fdc29856)
+8. Create the catalog source for the App Connect operator.
+   * ``` sh
+      oc patch \
+--filename=ibm-appconnect/inventory/ibmAppconnect/files/op-olm/catalog_source.yaml \
+--type=merge \
+-o yaml \
+--patch="{\"metadata\":{\"namespace\":\"${PROJECT_IBM_APP_CONNECT}\"}}" \
+--dry-run=client \
+| oc apply -n ${PROJECT_IBM_APP_CONNECT} -f -
+     ```
 
+*![image](https://github.com/user-attachments/assets/df273210-880d-4c65-90ab-7934e37a4cde)
+ * Create the operator group for app connect.
+ *  ``` sh
+cat <<EOF | oc apply -f -
+  apiVersion: operators.coreos.com/v1
+  kind: OperatorGroup
+  metadata:
+    name: appconnect-og
+    namespace: ${PROJECT_IBM_APP_CONNECT}
+  spec:
+    targetNamespaces:
+    - ${PROJECT_IBM_APP_CONNECT}
+    upgradeStrategy: Default
+EOF
+
+    ```
+
+* ![image](https://github.com/user-attachments/assets/7a2025dd-0b59-4814-8072-a70a03ef2887)
+
+*Create the subscription to App Connect Operator.
+* ``` sh
+cat <<EOF | oc apply -f -
+  apiVersion: operators.coreos.com/v1alpha1
+  kind: Subscription
+  metadata:
+    name: ibm-appconnect-operator
+    namespace: ${PROJECT_IBM_APP_CONNECT}
+  spec:
+    channel: ${AC_CHANNEL_VERSION}
+    config:
+      env:
+      - name: ACECC_ENABLE_PUBLIC_API
+        value: "true"
+    installPlanApproval: Automatic
+    name: ibm-appconnect
+    source: appconnect-operator-catalogsource
+    sourceNamespace: ${PROJECT_IBM_APP_CONNECT}
+EOF
+
+  ```
+* ![image](https://github.com/user-attachments/assets/a9eb820b-fe26-45f0-af69-a66e5dd5a9b8)
+
+* You should Wait for the App Connect operator to be ready. Run the following command to checl that conditioned is met.
+* To check this, run
+``` sh
+oc wait csv \
+--namespace=${PROJECT_IBM_APP_CONNECT} \
+--selector=operators.coreos.com/ibm-appconnect.${PROJECT_IBM_APP_CONNECT}='' \
+--for='jsonpath={.status.phase}'=Succeeded
+```
+
+* ![image](https://github.com/user-attachments/assets/fc0af87e-216b-4c46-882e-d40e5baeca6f)
+## Creating secrets for services that use Multicloud Object Gateway
+Multicloud Object Gateway service ( noobaa service) is installed by default when ODF services is deployed.
+To confirm the services installed run ` oc get secrets --namespace=openshift-storage | grep noobaa`.
+![image](https://github.com/user-attachments/assets/51d71bf1-ebdd-477f-823b-029228494b76)
+Ensure noobaa-admin and noobaa-s3-serving-cer exist.
+* ensure you login `${CPDM_OC_LOGIN}`
+* Run `export NOOBAA_ACCOUNT_CREDENTIALS_SECRET=noobaa-admin`
+* Run `export NOOBAA_ACCOUNT_CERTIFICATE_SECRET=noobaa-s3-serving-cert`
+![image](https://github.com/user-attachments/assets/8dfae9a6-b493-48a4-8186-6229fcb97ddb)
+* ## For watsonx_Orchestrate
+* First run
+  ``` sh
+cpd-cli manage setup-mcg \
+--components=watson_assistant \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--noobaa_account_secret=${NOOBAA_ACCOUNT_CREDENTIALS_SECRET} \
+--noobaa_cert_secret=${NOOBAA_ACCOUNT_CERTIFICATE_SECRET}
+  ```
+![image](https://github.com/user-attachments/assets/696d3a84-d9a9-4353-a652-0faf6b5a1393)
+* Confirm the secrets have been created successfully by running
+``` sh
+oc get secrets --namespace=${PROJECT_CPD_INST_OPERANDS} \
+noobaa-account-watson-assistant \
+noobaa-cert-watson-assistant \
+noobaa-uri-watson-assistant
+```
+![image](https://github.com/user-attachments/assets/45707e86-4d33-444d-a56d-09729b95177b)
+
+
+* Now run this
+  ``` sh
+cpd-cli manage setup-mcg \
+--components=watsonx_orchestrate \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--noobaa_account_secret=${NOOBAA_ACCOUNT_CREDENTIALS_SECRET} \
+--noobaa_cert_secret=${NOOBAA_ACCOUNT_CERTIFICATE_SECRET}
+  ```
+
+
+![image](https://github.com/user-attachments/assets/d7c731d5-5569-4a7e-b2de-04b1cad72547)
+* Confirm that the secrets are ctreated by running
+``` sh
+oc get secrets --namespace=${PROJECT_CPD_INST_OPERANDS} \
+noobaa-account-watsonx-orchestrate \
+noobaa-cert-watsonx-orchestrate \
+noobaa-uri-watsonx-orchestrate
+```
+![image](https://github.com/user-attachments/assets/e21547bb-dd64-42d7-a836-1d71bd75614e)
+## Applied the required permissions
+1. Run `${CPDM_OC_LOGIN}`
+2. We used instances without tethered projects
+   ``` sh
+cpd-cli manage authorize-instance-topology \
+--cpd_operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+   ```
+![image](https://github.com/user-attachments/assets/3be69fd4-e252-4cb8-bb2b-349b569ac436)
+## Applied the required permissions
 
 
 
