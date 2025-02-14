@@ -357,7 +357,7 @@ This is a key components and the following steps should be carefully applied. Th
 6.Create the app-connect project , run `oc new-project ${PROJECT_IBM_APP_CONNECT}`
 7.![image](https://github.com/user-attachments/assets/0f7adf6a-8d3d-4dbc-b42c-5396fdc29856)
 8. Create the catalog source for the App Connect operator.
-   * ``` sh
+``` sh
       oc patch \
 --filename=ibm-appconnect/inventory/ibmAppconnect/files/op-olm/catalog_source.yaml \
 --type=merge \
@@ -365,11 +365,11 @@ This is a key components and the following steps should be carefully applied. Th
 --patch="{\"metadata\":{\"namespace\":\"${PROJECT_IBM_APP_CONNECT}\"}}" \
 --dry-run=client \
 | oc apply -n ${PROJECT_IBM_APP_CONNECT} -f -
-     ```
+ ```
 
 *![image](https://github.com/user-attachments/assets/df273210-880d-4c65-90ab-7934e37a4cde)
  * Create the operator group for app connect.
- *  ``` sh
+``` sh
 cat <<EOF | oc apply -f -
   apiVersion: operators.coreos.com/v1
   kind: OperatorGroup
@@ -382,12 +382,12 @@ cat <<EOF | oc apply -f -
     upgradeStrategy: Default
 EOF
 
-    ```
+```
 
 * ![image](https://github.com/user-attachments/assets/7a2025dd-0b59-4814-8072-a70a03ef2887)
 
 *Create the subscription to App Connect Operator.
-* ``` sh
+``` sh
 cat <<EOF | oc apply -f -
   apiVersion: operators.coreos.com/v1alpha1
   kind: Subscription
@@ -406,11 +406,12 @@ cat <<EOF | oc apply -f -
     sourceNamespace: ${PROJECT_IBM_APP_CONNECT}
 EOF
 
-  ```
+```
 * ![image](https://github.com/user-attachments/assets/a9eb820b-fe26-45f0-af69-a66e5dd5a9b8)
 
 * You should Wait for the App Connect operator to be ready. Run the following command to checl that conditioned is met.
 * To check this, run
+
 ``` sh
 oc wait csv \
 --namespace=${PROJECT_IBM_APP_CONNECT} \
@@ -430,13 +431,15 @@ Ensure noobaa-admin and noobaa-s3-serving-cer exist.
 ![image](https://github.com/user-attachments/assets/8dfae9a6-b493-48a4-8186-6229fcb97ddb)
 * ## For watsonx_Orchestrate
 * First run
-  ``` sh
+``` sh
 cpd-cli manage setup-mcg \
 --components=watson_assistant \
 --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
 --noobaa_account_secret=${NOOBAA_ACCOUNT_CREDENTIALS_SECRET} \
 --noobaa_cert_secret=${NOOBAA_ACCOUNT_CERTIFICATE_SECRET}
-  ```
+```
+
+
 ![image](https://github.com/user-attachments/assets/696d3a84-d9a9-4353-a652-0faf6b5a1393)
 * Confirm the secrets have been created successfully by running
 ``` sh
@@ -445,17 +448,18 @@ noobaa-account-watson-assistant \
 noobaa-cert-watson-assistant \
 noobaa-uri-watson-assistant
 ```
+
 ![image](https://github.com/user-attachments/assets/45707e86-4d33-444d-a56d-09729b95177b)
 
 
 * Now run this
-  ``` sh
+``` sh
 cpd-cli manage setup-mcg \
 --components=watsonx_orchestrate \
 --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
 --noobaa_account_secret=${NOOBAA_ACCOUNT_CREDENTIALS_SECRET} \
 --noobaa_cert_secret=${NOOBAA_ACCOUNT_CERTIFICATE_SECRET}
-  ```
+```
 
 
 ![image](https://github.com/user-attachments/assets/d7c731d5-5569-4a7e-b2de-04b1cad72547)
@@ -470,12 +474,15 @@ noobaa-uri-watsonx-orchestrate
 ## Applied the required permissions
 1. Run `${CPDM_OC_LOGIN}`
 2. We used instances without tethered projects
-   ``` sh
+
+``` sh
 cpd-cli manage authorize-instance-topology \
 --cpd_operator_ns=${PROJECT_CPD_INST_OPERATORS} \
 --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
-   ```
+```
 ![image](https://github.com/user-attachments/assets/3be69fd4-e252-4cb8-bb2b-349b569ac436)
+
+
 ## Applied the required permissions
 
 
