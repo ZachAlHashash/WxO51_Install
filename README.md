@@ -563,7 +563,7 @@ cpd-cli manage apply-cr \
 --components=${COMPONENTS} \
 --block_storage_class=${STG_CLASS_BLOCK} \
 --file_storage_class=${STG_CLASS_FILE} \
---license_acceptance=true \
+--license_acceptance=true 
 
 ```
 ![image](https://github.com/user-attachments/assets/975f131f-9c3d-494b-b92e-9df566a08702)
