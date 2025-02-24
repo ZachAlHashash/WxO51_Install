@@ -564,7 +564,7 @@ cpd-cli manage apply-cr \
 --block_storage_class=${STG_CLASS_BLOCK} \
 --file_storage_class=${STG_CLASS_FILE} \
 --license_acceptance=true \
---param-file=/tmp/work/install-options.yml
+
 ```
 ![image](https://github.com/user-attachments/assets/975f131f-9c3d-494b-b92e-9df566a08702)
 ![image](https://github.com/user-attachments/assets/5c79683e-7aa4-4853-8ff1-9d14d6ef59e4)
