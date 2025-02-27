@@ -260,7 +260,7 @@ EOF
 
 ![image](https://github.com/user-attachments/assets/15f2c5de-796a-4913-810d-30d01532d1d4)
 
-Confirm the operator is running
+Confirm the operator is running\
 5. run ` oc get pods -n redhat-ods-operator`
 ![image](https://github.com/user-attachments/assets/edcb03ac-3b52-49f2-9958-58cb4b86173f)
 6. run `oc get dscinitialization`
