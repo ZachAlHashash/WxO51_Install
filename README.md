@@ -94,7 +94,7 @@ Note: IBM cert manager is not needed for WxO 5.1 / CPD5.1 install.
  The commands for installing various components on the OCP cluster from the Baston use variables with
 the format ${VARIABLE_NAME}.
 While still logged in to bastion workstation as root and in cpd folder
-1. run `wget https://raw.githubusercontent.com/CloudPak-Outcomes/OutcomesProjects/refs/heads/main/L4assets/Installation/cpd_vars.sh`.
+1. run `wget https://raw.githubusercontent.com/CloudPak-Outcomes/Outcomes-Projects/refs/heads/main/L4assets/Installation/cpd_vars.sh`.
 2. Use vi to edit the cpd_vars.sh file.
 3. Scroll down to the "# Cluster" section
    Change the OCP_URL value to the "API URL" value from the Techzone Reservation Details 
