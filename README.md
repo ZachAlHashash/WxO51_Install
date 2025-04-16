@@ -20,6 +20,7 @@ Reserve OpenShift on TechZone for installation training
 Memory): 32x128.300gb
 - **Storage**: ODF (local disks) - 2TB
 - **Access to IBM TechZone**: [TechZone Reservation](https://techzone.ibm.com/my/reservations/create)
+OpenShift Cluster (VMware on IBM Cloud) - UPI - Public [https://techzone.ibm.com/my/reservations/create/63a3a25a3a4689001740dbb3]
 
 ## Prepare bastion workstation
 - **use the information in techzone provisioned instance to ssh to bastion workstation**
